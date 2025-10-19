@@ -13,6 +13,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ========================================
+// MODELOS BASE DE AUTH
+// ========================================
 model User {
   id            String    @id
   name          String
@@ -21,6 +24,11 @@ model User {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  // Campos adicionales
+  telefono      String?
+  role          String    @default("ADMIN")
+  movimientos   Movimiento[]
+  // Relaciones con Auth
   sessions      Session[]
   accounts      Account[]
 
@@ -71,4 +79,30 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+// ========================================
+// ENUMS Y MODELOS DE NEGOCIO
+// ========================================
+
+enum Rol {
+  ADMIN
+  USUARIO
+}
+
+enum TipoMovimiento {
+  INGRESO
+  EGRESO
+}
+
+model Movimiento {
+  id         String          @id @default(cuid())
+  concepto   String
+  monto      Float
+  fecha      DateTime
+  tipo       TipoMovimiento
+  usuarioId  String
+  usuario    User            @relation(fields: [usuarioId], references: [id])
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 }
