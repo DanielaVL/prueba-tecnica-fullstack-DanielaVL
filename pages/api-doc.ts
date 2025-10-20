@@ -1,5 +1,5 @@
 export const getApiDocs = async () => {
-  // Solo importar next-swagger-doc si estamos en desarrollo
+  // Solo generar Swagger en desarrollo
   if (process.env.NODE_ENV !== 'development') {
     return {
       openapi: '3.0.0',
@@ -11,6 +11,7 @@ export const getApiDocs = async () => {
     };
   }
 
+  // Import dinámico de next-swagger-doc para evitar problemas de fs en frontend
   const { createSwaggerSpec } = await import('next-swagger-doc');
 
   const spec = createSwaggerSpec({
@@ -31,9 +32,7 @@ export const getApiDocs = async () => {
         schemas: {
           Error: {
             type: 'object',
-            properties: {
-              message: { type: 'string' },
-            },
+            properties: { message: { type: 'string' } },
           },
           User: {
             type: 'object',
@@ -59,10 +58,7 @@ export const getApiDocs = async () => {
           },
         },
         securitySchemes: {
-          nextAuth: {
-            type: 'http',
-            scheme: 'bearer',
-          },
+          nextAuth: { type: 'http', scheme: 'bearer' },
         },
       },
       security: [{ nextAuth: [] }],
@@ -74,33 +70,9 @@ export const getApiDocs = async () => {
             tags: ['Usuarios'],
             security: [{ nextAuth: [] }],
             responses: {
-              '200': {
-                description: 'Lista de usuarios obtenida exitosamente',
-                content: {
-                  'application/json': {
-                    schema: {
-                      type: 'array',
-                      items: { $ref: '#/components/schemas/User' },
-                    },
-                  },
-                },
-              },
-              '401': {
-                description: 'No autorizado',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
-              '403': {
-                description: 'Acceso denegado - Se requiere rol de administrador',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
+              '200': { description: 'Lista de usuarios obtenida exitosamente' },
+              '401': { description: 'No autorizado' },
+              '403': { description: 'Acceso denegado - Se requiere rol de administrador' },
             },
           },
         },
@@ -111,25 +83,8 @@ export const getApiDocs = async () => {
             tags: ['Transacciones'],
             security: [{ nextAuth: [] }],
             responses: {
-              '200': {
-                description: 'Lista de transacciones obtenida exitosamente',
-                content: {
-                  'application/json': {
-                    schema: {
-                      type: 'array',
-                      items: { $ref: '#/components/schemas/Transaction' },
-                    },
-                  },
-                },
-              },
-              '401': {
-                description: 'No autorizado',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
+              '200': { description: 'Lista de transacciones obtenida exitosamente' },
+              '401': { description: 'No autorizado' },
             },
           },
           post: {
@@ -146,7 +101,7 @@ export const getApiDocs = async () => {
                     required: ['concepto', 'monto', 'fecha', 'tipo'],
                     properties: {
                       concepto: { type: 'string' },
-                      monto: { type: 'number', format: 'float', minimum: 0 },
+                      monto: { type: 'number', minimum: 0 },
                       fecha: { type: 'string', format: 'date-time' },
                       tipo: { type: 'string', enum: ['INGRESO', 'EGRESO'] },
                     },
@@ -155,38 +110,10 @@ export const getApiDocs = async () => {
               },
             },
             responses: {
-              '201': {
-                description: 'Transacción creada exitosamente',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Transaction' },
-                  },
-                },
-              },
-              '400': {
-                description: 'Datos inválidos',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
-              '401': {
-                description: 'No autorizado',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
-              '403': {
-                description: 'Acceso denegado - Se requiere rol de administrador',
-                content: {
-                  'application/json': {
-                    schema: { $ref: '#/components/schemas/Error' },
-                  },
-                },
-              },
+              '201': { description: 'Transacción creada exitosamente' },
+              '400': { description: 'Datos inválidos' },
+              '401': { description: 'No autorizado' },
+              '403': { description: 'Acceso denegado - Se requiere rol de administrador' },
             },
           },
         },
