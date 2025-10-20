@@ -43,8 +43,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!isAdmin) return res.status(403).json({ message: "Acceso denegado" });
 
     const { concepto, monto, fecha, tipo } = req.body;
-    if (!concepto || !monto || !fecha || !tipo) {
+    if (!concepto || monto === undefined || monto === null || !fecha || !tipo) {
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
+    }
+
+    const montoNum = typeof monto === 'number' ? monto : parseFloat(monto);
+    if (isNaN(montoNum) || montoNum <= 0) {
+      return res.status(400).json({ message: 'El monto debe ser mayor que 0' });
     }
 
     const fechaObj = new Date(fecha);
@@ -54,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const movimiento = await prisma.movimiento.create({
-        data: { concepto, monto: parseFloat(monto), fecha: fechaObj, tipo, usuarioId: userId },
+        data: { concepto, monto: montoNum, fecha: fechaObj, tipo, usuarioId: userId },
       });
       return res.status(201).json(movimiento);
     } catch (err) {
