@@ -5,11 +5,6 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Define el callbackUrl basado en el entorno
-const callbackUrl = process.env.NODE_ENV === 'production'
-  ? 'https://prueba-tecnica-fullstack-d-git-0decda-daniela-vasquezs-projects.vercel.app/api/auth/callback/github'
-  : 'http://localhost:3000/api/auth/callback/github';
-
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   debug: true,
