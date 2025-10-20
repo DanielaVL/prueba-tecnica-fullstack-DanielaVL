@@ -11,6 +11,7 @@ const callbackUrl = process.env.NODE_ENV === 'production'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  debug: true,
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_CLIENT_ID as string,
@@ -20,20 +21,26 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }: { session: any; user: any }) {
       if (session.user) {
-        session.user.id = user.id; // Asegura que el ID del usuario esté en la sesión
+        session.user.id = user.id;
         session.user.role = user.role || 'ADMIN';
       }
       return session;
     },
-    /*async signIn({ user }) {
-      if (user.id) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'ADMIN' },
-        });
+    async signIn({ user, account, profile }) {
+      try {
+        if (!user.email) {
+          console.error("No email provided by GitHub");
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error in signIn callback:", error);
+        return false;
       }
-      return true;
-    },*/
+    },
+    async redirect({ url, baseUrl }) {
+      return url.startsWith(baseUrl) ? url : baseUrl;
+    }
   },
 };
 
