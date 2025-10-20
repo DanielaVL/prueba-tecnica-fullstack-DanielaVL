@@ -12,17 +12,11 @@ const nextConfig = {
         stream: false,
         util: false,
       };
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'node:path': 'path-browserify',
-        'node:util': 'util/',
-        'node:crypto': 'crypto-browserify',
-        'node:stream': 'stream-browserify',
-      };
     }
     return config;
   },
-  transpilePackages: ['yaml', 'swagger-jsdoc', 'next-swagger-doc'],
+  transpilePackages: ['swagger-ui-react'],
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
 };
 
 export default nextConfig;

@@ -7,6 +7,11 @@ const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
   loading: () => <div>Cargando documentación...</div>
 });
 
+// Marca la página como cliente
+export const config = {
+  unstable_runtimeJS: true
+};
+
 export default function ApiDoc() {
   const [spec, setSpec] = useState<any>(null);
   const [error, setError] = useState<string>('');
