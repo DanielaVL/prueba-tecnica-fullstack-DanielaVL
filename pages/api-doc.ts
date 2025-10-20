@@ -1,4 +1,16 @@
 export const getApiDocs = async () => {
+  // Solo importar next-swagger-doc si estamos en desarrollo
+  if (process.env.NODE_ENV !== 'development') {
+    return {
+      openapi: '3.0.0',
+      info: {
+        title: 'Documentación no disponible en producción',
+        version: '1.0.0',
+      },
+      paths: {},
+    };
+  }
+
   const { createSwaggerSpec } = await import('next-swagger-doc');
 
   const spec = createSwaggerSpec({
