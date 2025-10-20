@@ -1,22 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GithubProvider from "next-auth/providers/github";
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-declare module "next-auth" {
-  interface User {
-    role?: string;
-  }
-  interface Session {
-    user: User & {
-      role?: string;
-    };
-  }
-}
-
-export const { auth, handlers: authHandler } = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GithubProvider({
@@ -31,7 +20,7 @@ export const { auth, handlers: authHandler } = NextAuth({
       }
       return session;
     },
-    async signIn({ user }) {
+    /*async signIn({ user }) {
       if (user.id) {
         await prisma.user.update({
           where: { id: user.id },
@@ -39,8 +28,8 @@ export const { auth, handlers: authHandler } = NextAuth({
         });
       }
       return true;
-    },
+    },*/
   },
-});
+};
 
-export type Session = any; // TODO: Define proper session type
+export default NextAuth(authOptions);

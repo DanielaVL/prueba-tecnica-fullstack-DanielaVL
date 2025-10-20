@@ -17,41 +17,37 @@ datasource db {
 // MODELOS BASE DE AUTH
 // ========================================
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified Boolean?
   image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  // Campos adicionales
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   telefono      String?
   role          String    @default("ADMIN")
   movimientos   Movimiento[]
-  // Relaciones con Auth
   sessions      Session[]
   accounts      Account[]
 
-  @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
+  id        String   @id @default(cuid())
+  sessionToken String @unique
+  userId    String
+  expires   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
-  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
-model Account {
+/*model Account {
   id                    String    @id
   accountId             String
   providerId            String
@@ -67,6 +63,26 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@map("account")
+}*/
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?     
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
   @@map("account")
 }
 

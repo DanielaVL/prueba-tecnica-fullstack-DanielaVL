@@ -1,5 +1,15 @@
-import { createAuthClient } from 'better-auth/react';
+import { type Session } from 'next-auth';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
-});
+export function useAuth() {
+  const { data: session, status } = useSession();
+  
+  return {
+    session,
+    status,
+    isAuthenticated: status === 'authenticated',
+    isLoading: status === 'loading',
+    signIn: () => signIn('github'),
+    signOut,
+  };
+}
