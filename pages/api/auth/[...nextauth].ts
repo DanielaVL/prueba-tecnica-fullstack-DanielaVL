@@ -16,6 +16,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }: { session: any; user: any }) {
       if (session.user) {
+        session.user.id = user.id; // Asegura que el ID del usuario esté en la sesión
         session.user.role = user.role || 'ADMIN';
       }
       return session;

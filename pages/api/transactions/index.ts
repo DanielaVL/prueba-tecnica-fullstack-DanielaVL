@@ -1,44 +1,65 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
-import { auth } from '@/lib/auth';
+import { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await auth();
-  if (!session) return res.status(401).json({ error: 'No autenticado' });
+  const session = await getServerSession(req, res, authOptions);
 
-  const user = session.user;
+  if (!session) {
+    return res.status(401).json({ message: "No autorizado" });
+  }
 
-  switch (req.method) {
-    case 'GET': {
+  const userId = session.user.id;
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (req.method === "GET") {
+    // Listar todos los movimientos
+    try {
       const movimientos = await prisma.movimiento.findMany({
-        include: { usuario: true },
-        orderBy: { fecha: 'desc' },
+        orderBy: { fecha: "desc" },
       });
-      return res.json(movimientos);
+      return res.status(200).json(movimientos);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error al obtener movimientos" });
+    }
+  }
+
+  if (req.method === "POST") {
+    // Crear movimiento (solo ADMIN)
+    if (!isAdmin) return res.status(403).json({ message: "Acceso denegado" });
+
+    const { concepto, monto, fecha, tipo } = req.body;
+
+    if (!concepto || !monto || !fecha || !tipo) {
+      return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    case 'POST': {
-      // Cargar el usuario desde la base de datos para obtener el rol
-      const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-      if (!dbUser) return res.status(404).json({ error: 'Usuario no encontrado' });
-      if (dbUser.role !== 'ADMIN') return res.status(403).json({ error: 'No autorizado' });
+    const fechaObj = new Date(fecha);
+    if (fechaObj.toString() === "Invalid Date") {
+      return res.status(400).json({ message: "Fecha inválida" });
+    }
 
-      const { concepto, monto, fecha, tipo } = req.body;
-      const nuevo = await prisma.movimiento.create({
+    try {
+      const movimiento = await prisma.movimiento.create({
         data: {
           concepto,
           monto: parseFloat(monto),
-          fecha: new Date(fecha),
+          fecha: fechaObj,
           tipo,
-          usuarioId: user.id,
+          usuarioId: userId,
         },
       });
-      return res.status(201).json(nuevo);
+      return res.status(201).json(movimiento);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error al crear movimiento" });
     }
-
-    default:
-      return res.status(405).json({ error: 'Método no permitido' });
   }
+
+  res.setHeader("Allow", ["GET", "POST"]);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 }

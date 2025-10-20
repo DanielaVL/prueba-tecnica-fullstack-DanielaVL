@@ -1,108 +1,242 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../lib/auth/client';
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
-interface Movimiento {
+type Movimiento = {
   id: string;
   concepto: string;
   monto: number;
   fecha: string;
-  tipo: 'INGRESO' | 'EGRESO';
-  usuario: { nombre: string };
-}
+  tipo: "INGRESO" | "EGRESO";
+  usuarioId: string;
+};
 
 export default function Transactions() {
-  const { session } = useAuth();
+  const { data: session } = useSession();
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
-  const [form, setForm] = useState({ concepto: '', monto: '', fecha: '', tipo: 'INGRESO' });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    concepto: "",
+    monto: "",
+    fecha: "",
+    tipo: "INGRESO",
+  });
+  const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    const res = await fetch('/api/transactions');
-    const data = await res.json();
-    setMovimientos(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await fetch('/api/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      setForm({ concepto: '', monto: '', fecha: '', tipo: 'INGRESO' });
-      fetchData();
+  // Fetch movimientos
+  const fetchMovimientos = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/transactions");
+      if (!res.ok) throw new Error("Error al obtener movimientos");
+      const data: Movimiento[] = await res.json();
+      setMovimientos(data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al obtener movimientos");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <p>Cargando...</p>;
+  useEffect(() => {
+    fetchMovimientos();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!form.concepto || !form.monto || !form.fecha || !form.tipo) {
+      setError("Todos los campos son obligatorios");
+      return;
+    }
+
+    if (isNaN(Number(form.monto))) {
+      setError("El monto debe ser un número");
+      return;
+    }
+
+    const fechaValida = new Date(form.fecha);
+    if (fechaValida.toString() === "Invalid Date") {
+      setError("Fecha inválida");
+      return;
+    }
+
+    try {
+      let res: Response;
+      if (editingId) {
+        // Editar movimiento
+        res = await fetch(`/api/transactions/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            concepto: form.concepto,
+            monto: parseFloat(form.monto),
+            fecha: form.fecha,
+            tipo: form.tipo,
+          }),
+        });
+      } else {
+        // Crear movimiento
+        res = await fetch("/api/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            concepto: form.concepto,
+            monto: parseFloat(form.monto),
+            fecha: form.fecha,
+            tipo: form.tipo,
+          }),
+        });
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Error al guardar el movimiento");
+      }
+
+      const mov: Movimiento = await res.json();
+
+      if (editingId) {
+        setMovimientos((prev) =>
+          prev.map((m) => (m.id === editingId ? mov : m))
+        );
+        setEditingId(null);
+      } else {
+        setMovimientos([mov, ...movimientos]);
+      }
+
+      setForm({ concepto: "", monto: "", fecha: "", tipo: "INGRESO" });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al guardar el movimiento");
+    }
+  };
+
+  const handleEdit = (mov: Movimiento) => {
+    setForm({
+      concepto: mov.concepto,
+      monto: mov.monto.toString(),
+      fecha: new Date(mov.fecha).toISOString().split("T")[0],
+      tipo: mov.tipo,
+    });
+    setEditingId(mov.id);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este movimiento?")) return;
+    try {
+      const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Error al eliminar movimiento");
+      setMovimientos((prev) => prev.filter((m) => m.id !== id));
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al eliminar movimiento");
+    }
+  };
+
+  if (!session) return <p>No autorizado</p>;
+
+  const isAdmin = session.user?.role === "ADMIN";
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-semibold mb-4">Gestión de Ingresos y Egresos</h1>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Movimientos</h1>
 
-      {session?.user?.role === 'ADMIN' && (
-        <form onSubmit={handleSubmit} className="flex gap-4 mb-6">
+      {/* Formulario solo para ADMIN */}
+      {isAdmin && (
+        <form onSubmit={handleSubmit} className="mb-6 space-y-2">
+          {error && <p className="text-red-500">{error}</p>}
           <input
-            className="border p-2"
+            type="text"
+            name="concepto"
             placeholder="Concepto"
             value={form.concepto}
-            onChange={(e) => setForm({ ...form, concepto: e.target.value })}
+            onChange={handleChange}
+            className="border p-2 w-full"
           />
           <input
-            className="border p-2"
-            placeholder="Monto"
             type="number"
+            name="monto"
+            placeholder="Monto"
             value={form.monto}
-            onChange={(e) => setForm({ ...form, monto: e.target.value })}
+            onChange={handleChange}
+            className="border p-2 w-full"
           />
           <input
-            className="border p-2"
             type="date"
+            name="fecha"
             value={form.fecha}
-            onChange={(e) => setForm({ ...form, fecha: e.target.value })}
+            onChange={handleChange}
+            className="border p-2 w-full"
           />
           <select
-            className="border p-2"
+            name="tipo"
             value={form.tipo}
-            onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+            onChange={handleChange}
+            className="border p-2 w-full"
           >
             <option value="INGRESO">Ingreso</option>
             <option value="EGRESO">Egreso</option>
           </select>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" type="submit">
-            Agregar
+          <button
+            type="submit"
+            className="bg-blue-500 text-white p-2 rounded w-full"
+          >
+            {editingId ? "Guardar cambios" : "Agregar Movimiento"}
           </button>
         </form>
       )}
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="p-2 border">Concepto</th>
-            <th className="p-2 border">Monto</th>
-            <th className="p-2 border">Fecha</th>
-            <th className="p-2 border">Tipo</th>
-            <th className="p-2 border">Usuario</th>
-          </tr>
-        </thead>
-        <tbody>
-          {movimientos.map((m) => (
-            <tr key={m.id}>
-              <td className="p-2 border">{m.concepto}</td>
-              <td className="p-2 border">${m.monto.toFixed(2)}</td>
-              <td className="p-2 border">{new Date(m.fecha).toLocaleDateString()}</td>
-              <td className="p-2 border">{m.tipo}</td>
-              <td className="p-2 border">{m.usuario.nombre}</td>
+      {/* Tabla */}
+      {loading ? (
+        <p>Cargando...</p>
+      ) : movimientos.length === 0 ? (
+        <p>No hay movimientos</p>
+      ) : (
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border p-2">Concepto</th>
+              <th className="border p-2">Monto</th>
+              <th className="border p-2">Fecha</th>
+              <th className="border p-2">Tipo</th>
+              {isAdmin && <th className="border p-2">Acciones</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {movimientos.map((m) => (
+              <tr key={m.id}>
+                <td className="border p-2">{m.concepto}</td>
+                <td className="border p-2">{m.monto.toLocaleString()}</td>
+                <td className="border p-2">{new Date(m.fecha).toLocaleDateString()}</td>
+                <td className="border p-2">{m.tipo}</td>
+                {isAdmin && (
+                  <td className="border p-2 space-x-2">
+                    <button
+                      className="bg-yellow-400 text-white px-2 py-1 rounded"
+                      onClick={() => handleEdit(m)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      onClick={() => handleDelete(m.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
