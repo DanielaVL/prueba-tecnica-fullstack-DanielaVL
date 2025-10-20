@@ -34,9 +34,9 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl;
-    }
+    async redirect({ url }) {
+      return url;
+    },
   },
 };
 
