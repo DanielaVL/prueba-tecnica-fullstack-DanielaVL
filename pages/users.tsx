@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react";
 import { getSession } from "next-auth/react";
 import axios from "axios";
+import { Layout } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableHead,
+} from "@/components/ui/table";
 
 interface User {
   id: string;
@@ -58,96 +69,94 @@ export default function Users() {
     return <div className="flex justify-center items-center h-screen bg-gray-100">Cargando...</div>;
 
   return (
-    <div className="relative min-h-screen bg-gray-100">
-      <div className="flex justify-center items-start p-6">
-        <div className="w-full max-w-4xl bg-white p-6 rounded shadow">
-          <h1 className="text-2xl font-bold mb-4 text-center">Usuarios</h1>
-          <table className="w-full border border-gray-300 text-center">
-            <thead>
-              <tr>
-                <th className="border px-2 py-1">Nombre</th>
-                <th className="border px-2 py-1">Correo</th>
-                <th className="border px-2 py-1">Rol</th>
-                <th className="border px-2 py-1">Teléfono</th>
-                <th className="border px-2 py-1">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="border px-2 py-1">
-                    {editUser?.id === u.id ? (
-                      <input
-                        className="border px-1 py-1 text-center w-full"
-                        value={editUser.name}
-                        onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
-                      />
-                    ) : (
-                      u.name
-                    )}
-                  </td>
-                  <td className="border px-2 py-1">{u.email}</td>
-                  <td className="border px-2 py-1">
-                    {editUser?.id === u.id ? (
-                      <select
-                        className="border px-1 py-1 text-center w-full"
-                        value={editUser.role}
-                        onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
-                      >
-                        <option value="ADMIN">ADMIN</option>
-                        <option value="USUARIO">USUARIO</option>
-                      </select>
-                    ) : (
-                      u.role
-                    )}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {editUser?.id === u.id ? (
-                      <input
-                        className="border px-1 py-1 text-center w-full"
-                        value={editUser.telefono || ""}
-                        onChange={(e) => setEditUser({ ...editUser, telefono: e.target.value })}
-                      />
-                    ) : (
-                      u.telefono || "-"
-                    )}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {editUser?.id === u.id ? (
-                      <>
-                        <button
-                          onClick={handleSave}
-                          className="px-2 py-1 bg-green-500 text-white rounded"
+    <Layout withSidebar={false} footerFixed>
+      <div className="relative min-h-screen bg-gray-100">
+        <div className="flex justify-center items-start p-6">
+          <div className="w-full max-w-4xl bg-white p-6 rounded shadow">
+            <h1 className="text-2xl font-bold mb-4 text-center">Usuarios</h1>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Correo</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell>
+                      {editUser?.id === u.id ? (
+                        <Input
+                          className="text-center"
+                          value={editUser.name}
+                          onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
+                        />
+                      ) : (
+                        u.name
+                      )}
+                    </TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>
+                      {editUser?.id === u.id ? (
+                        <select
+                          className="w-full border px-1 py-1 text-center rounded"
+                          value={editUser.role}
+                          onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
                         >
-                          Guardar
-                        </button>
-                        <button
-                          onClick={() => setEditUser(null)}
-                          className="px-2 py-1 bg-gray-400 text-white rounded"
+                          <option value="ADMIN">ADMIN</option>
+                          <option value="USUARIO">USUARIO</option>
+                        </select>
+                      ) : (
+                        u.role
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editUser?.id === u.id ? (
+                        <Input
+                          className="text-center"
+                          value={editUser.telefono || ""}
+                          onChange={(e) => setEditUser({ ...editUser, telefono: e.target.value })}
+                        />
+                      ) : (
+                        u.telefono || "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editUser?.id === u.id ? (
+                        <>
+                          <Button
+                            variant="secondary"
+                            onClick={handleSave}
+                            className="mr-2"
+                          >
+                            Guardar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditUser(null)}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          onClick={() => handleEdit(u)}
                         >
-                          Cancelar
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleEdit(u)}
-                        className="px-2 py-1 bg-blue-500 text-white rounded"
-                      >
-                        Editar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                          Editar
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="w-full absolute bottom-0">
-        <img src="/footer.jpg" alt="Footer" className="w-full h-36" />
-      </footer>
-    </div>
+    </Layout>
   );
 }
