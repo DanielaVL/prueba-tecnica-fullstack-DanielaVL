@@ -13,6 +13,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, user }: { session: any; user: any }) {
       if (session.user) {
