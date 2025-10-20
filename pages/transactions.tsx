@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
@@ -8,6 +10,7 @@ type Movimiento = {
   fecha: string;
   tipo: "INGRESO" | "EGRESO";
   usuarioId: string;
+  usuarioNombre: string;
 };
 
 export default function Transactions() {
@@ -23,7 +26,6 @@ export default function Transactions() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Fetch movimientos
   const fetchMovimientos = async () => {
     setLoading(true);
     try {
@@ -70,7 +72,6 @@ export default function Transactions() {
     try {
       let res: Response;
       if (editingId) {
-        // Editar movimiento
         res = await fetch(`/api/transactions/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -82,7 +83,6 @@ export default function Transactions() {
           }),
         });
       } else {
-        // Crear movimiento
         res = await fetch("/api/transactions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -144,99 +144,113 @@ export default function Transactions() {
 
   const isAdmin = session.user?.role === "ADMIN";
 
+  // Calcular saldo total
+  const total = movimientos.reduce((acc, m) => {
+    return m.tipo === "INGRESO" ? acc + m.monto : acc - m.monto;
+  }, 0);
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Movimientos</h1>
+    <div className="bg-gray-100 min-h-screen p-6">
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+        <h1 className="text-2xl font-bold mb-4">Gestión de Ingresos y Egresos</h1>
 
-      {/* Formulario solo para ADMIN */}
-      {isAdmin && (
-        <form onSubmit={handleSubmit} className="mb-6 space-y-2">
-          {error && <p className="text-red-500">{error}</p>}
-          <input
-            type="text"
-            name="concepto"
-            placeholder="Concepto"
-            value={form.concepto}
-            onChange={handleChange}
-            className="border p-2 w-full"
-          />
-          <input
-            type="number"
-            name="monto"
-            placeholder="Monto"
-            value={form.monto}
-            onChange={handleChange}
-            className="border p-2 w-full"
-          />
-          <input
-            type="date"
-            name="fecha"
-            value={form.fecha}
-            onChange={handleChange}
-            className="border p-2 w-full"
-          />
-          <select
-            name="tipo"
-            value={form.tipo}
-            onChange={handleChange}
-            className="border p-2 w-full"
-          >
-            <option value="INGRESO">Ingreso</option>
-            <option value="EGRESO">Egreso</option>
-          </select>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white p-2 rounded w-full"
-          >
-            {editingId ? "Guardar cambios" : "Agregar Movimiento"}
-          </button>
-        </form>
-      )}
+        {/* Formulario solo para ADMIN */}
+        {isAdmin && (
+          <form onSubmit={handleSubmit} className="mb-6 space-y-2">
+            {error && <p className="text-red-500">{error}</p>}
+            <input
+              type="text"
+              name="concepto"
+              placeholder="Concepto"
+              value={form.concepto}
+              onChange={handleChange}
+              className="border p-2 w-full"
+            />
+            <input
+              type="number"
+              name="monto"
+              placeholder="Monto"
+              value={form.monto}
+              onChange={handleChange}
+              className="border p-2 w-full"
+            />
+            <input
+              type="date"
+              name="fecha"
+              value={form.fecha}
+              onChange={handleChange}
+              className="border p-2 w-full"
+            />
+            <select
+              name="tipo"
+              value={form.tipo}
+              onChange={handleChange}
+              className="border p-2 w-full"
+            >
+              <option value="INGRESO">Ingreso</option>
+              <option value="EGRESO">Egreso</option>
+            </select>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white p-2 rounded w-full"
+            >
+              {editingId ? "Guardar cambios" : "Agregar movimiento"}
+            </button>
+          </form>
+        )}
 
-      {/* Tabla */}
-      {loading ? (
-        <p>Cargando...</p>
-      ) : movimientos.length === 0 ? (
-        <p>No hay movimientos</p>
-      ) : (
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="border p-2">Concepto</th>
-              <th className="border p-2">Monto</th>
-              <th className="border p-2">Fecha</th>
-              <th className="border p-2">Tipo</th>
-              {isAdmin && <th className="border p-2">Acciones</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {movimientos.map((m) => (
-              <tr key={m.id}>
-                <td className="border p-2">{m.concepto}</td>
-                <td className="border p-2">{m.monto.toLocaleString()}</td>
-                <td className="border p-2">{new Date(m.fecha).toLocaleDateString()}</td>
-                <td className="border p-2">{m.tipo}</td>
-                {isAdmin && (
-                  <td className="border p-2 space-x-2">
-                    <button
-                      className="bg-yellow-400 text-white px-2 py-1 rounded"
-                      onClick={() => handleEdit(m)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleDelete(m.id)}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        {/* Tabla */}
+        {loading ? (
+          <p>Cargando...</p>
+        ) : movimientos.length === 0 ? (
+          <p>No hay movimientos</p>
+        ) : (
+          <>
+            <table className="w-full border-collapse border border-gray-300 text-center">
+              <thead>
+                <tr>
+                  <th className="border p-2">Concepto</th>
+                  <th className="border p-2">Monto</th>
+                  <th className="border p-2">Fecha</th>
+                  <th className="border p-2">Tipo</th>
+                  <th className="border p-2">Usuario</th>
+                  {isAdmin && <th className="border p-2">Acciones</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {movimientos.map((m) => (
+                  <tr key={m.id}>
+                    <td className="border p-2">{m.concepto}</td>
+                    <td className="border p-2">{m.monto.toLocaleString()}</td>
+                    <td className="border p-2">{new Date(m.fecha).toLocaleDateString()}</td>
+                    <td className="border p-2">{m.tipo}</td>
+                    <td className="border p-2">{m.usuarioNombre}</td>
+                    {isAdmin && (
+                      <td className="border p-2 space-x-2">
+                        <button
+                          className="bg-yellow-400 text-white px-2 py-1 rounded"
+                          onClick={() => handleEdit(m)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded"
+                          onClick={() => handleDelete(m.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-5 text-center text-lg font-medium">
+              Saldo total: ${total.toLocaleString()}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

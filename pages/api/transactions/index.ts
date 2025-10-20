@@ -16,12 +16,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isAdmin = session.user.role === "ADMIN";
 
   if (req.method === "GET") {
-    // Listar todos los movimientos
     try {
       const movimientos = await prisma.movimiento.findMany({
         orderBy: { fecha: "desc" },
+        include: { usuario: true },
       });
-      return res.status(200).json(movimientos);
+
+      const result = movimientos.map((m) => ({
+        id: m.id,
+        concepto: m.concepto,
+        monto: m.monto,
+        fecha: m.fecha,
+        tipo: m.tipo,
+        usuarioId: m.usuarioId,
+        usuarioNombre: m.usuario.name,
+      }));
+
+      return res.status(200).json(result);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error al obtener movimientos" });
@@ -29,11 +40,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "POST") {
-    // Crear movimiento (solo ADMIN)
     if (!isAdmin) return res.status(403).json({ message: "Acceso denegado" });
 
     const { concepto, monto, fecha, tipo } = req.body;
-
     if (!concepto || !monto || !fecha || !tipo) {
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
@@ -45,13 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const movimiento = await prisma.movimiento.create({
-        data: {
-          concepto,
-          monto: parseFloat(monto),
-          fecha: fechaObj,
-          tipo,
-          usuarioId: userId,
-        },
+        data: { concepto, monto: parseFloat(monto), fecha: fechaObj, tipo, usuarioId: userId },
       });
       return res.status(201).json(movimiento);
     } catch (err) {

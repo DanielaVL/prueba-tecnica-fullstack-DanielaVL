@@ -8,16 +8,12 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
-  if (!session) {
-    return res.status(401).json({ message: "No autorizado" });
-  }
+  if (!session) return res.status(401).json({ message: "No autorizado" });
 
   const isAdmin = session.user.role === "ADMIN";
   const { id } = req.query;
 
-  if (!id || typeof id !== "string") {
-    return res.status(400).json({ message: "ID inválido" });
-  }
+  if (!id || typeof id !== "string") return res.status(400).json({ message: "ID inválido" });
 
   if (req.method === "PUT") {
     if (!isAdmin) return res.status(403).json({ message: "Acceso denegado" });
@@ -35,12 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const updated = await prisma.movimiento.update({
         where: { id },
-        data: {
-          concepto,
-          monto: parseFloat(monto),
-          fecha: fechaObj,
-          tipo,
-        },
+        data: { concepto, monto: parseFloat(monto), fecha: fechaObj, tipo },
       });
       return res.status(200).json(updated);
     } catch (err) {

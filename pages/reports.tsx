@@ -49,7 +49,7 @@ export default function Reports() {
     fetchMovimientos();
   }, []);
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <div className="flex justify-center items-center h-screen">Cargando...</div>;
 
   // Preparar datos para gráfico
   const groupedByConcepto = movimientos.reduce((acc: any, m: Movimiento) => {
@@ -77,19 +77,50 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Reportes</h1>
-      <h2 className="text-lg mb-2">Saldo actual: <span className="font-bold">${saldo}</span></h2>
-      <div className="w-full max-w-3xl mb-4">
-        <Bar data={data} />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <div className="w-full max-w-4xl bg-white p-6 rounded shadow">
+        <h1 className="text-2xl font-bold mb-4 text-center">Reportes</h1>
+        <h2 className="text-lg mb-6 text-center">
+          Saldo actual: <span className="font-bold">${saldo.toLocaleString()}</span>
+        </h2>
+        <div className="w-full h-96 mb-6">
+          <Bar
+            data={data}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top" as const },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      let value = context.raw as number;
+                      return `$${value.toLocaleString()}`;
+                    },
+                  },
+                },
+              },
+              scales: {
+                y: {
+                  ticks: {
+                    callback: function (value) {
+                      return `$${Number(value).toLocaleString()}`;
+                    },
+                  },
+                },
+              },
+            }}
+          />
+        </div>
+        <div className="flex justify-center">
+          <CSVLink
+            data={movimientos}
+            filename={`reporte_movimientos_${new Date().toISOString()}.csv`}
+            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Descargar CSV
+          </CSVLink>
+        </div>
       </div>
-      <CSVLink
-        data={movimientos}
-        filename={`reporte_movimientos_${new Date().toISOString()}.csv`}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Descargar CSV
-      </CSVLink>
     </div>
   );
 }
