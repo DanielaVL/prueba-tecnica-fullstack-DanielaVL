@@ -5,6 +5,10 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const callbackUrl = process.env.NODE_ENV === 'production'
+  ? 'https://prueba-tecnica-fullstack-d-git-0decda-daniela-vasquezs-projects.vercel.app/api/auth/callback/github'
+  : 'http://localhost:3000/api/auth/callback/github';
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -13,7 +17,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, user }: { session: any; user: any }) {
       if (session.user) {
