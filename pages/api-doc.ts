@@ -1,6 +1,6 @@
-import { createSwaggerSpec } from 'next-swagger-doc';
+export const getApiDocs = async () => {
+  const { createSwaggerSpec } = await import('next-swagger-doc');
 
-export const getApiDocs = () => {
   const spec = createSwaggerSpec({
     definition: {
       openapi: '3.0.0',
@@ -20,60 +20,29 @@ export const getApiDocs = () => {
           Error: {
             type: 'object',
             properties: {
-              message: {
-                type: 'string',
-              },
+              message: { type: 'string' },
             },
           },
           User: {
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              name: {
-                type: 'string',
-              },
-              email: {
-                type: 'string',
-                format: 'email',
-              },
-              role: {
-                type: 'string',
-                enum: ['ADMIN', 'USER'],
-              },
-              telefono: {
-                type: 'string',
-              },
+              id: { type: 'string' },
+              name: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+              role: { type: 'string', enum: ['ADMIN', 'USER'] },
+              telefono: { type: 'string' },
             },
           },
           Transaction: {
             type: 'object',
             properties: {
-              id: {
-                type: 'string',
-              },
-              concepto: {
-                type: 'string',
-              },
-              monto: {
-                type: 'number',
-                format: 'float',
-              },
-              fecha: {
-                type: 'string',
-                format: 'date-time',
-              },
-              tipo: {
-                type: 'string',
-                enum: ['INGRESO', 'EGRESO'],
-              },
-              usuarioId: {
-                type: 'string',
-              },
-              usuarioNombre: {
-                type: 'string',
-              },
+              id: { type: 'string' },
+              concepto: { type: 'string' },
+              monto: { type: 'number', format: 'float' },
+              fecha: { type: 'string', format: 'date-time' },
+              tipo: { type: 'string', enum: ['INGRESO', 'EGRESO'] },
+              usuarioId: { type: 'string' },
+              usuarioNombre: { type: 'string' },
             },
           },
         },
@@ -84,11 +53,7 @@ export const getApiDocs = () => {
           },
         },
       },
-      security: [
-        {
-          nextAuth: [],
-        },
-      ],
+      security: [{ nextAuth: [] }],
       paths: {
         '/users': {
           get: {
@@ -103,9 +68,7 @@ export const getApiDocs = () => {
                   'application/json': {
                     schema: {
                       type: 'array',
-                      items: {
-                        $ref: '#/components/schemas/User',
-                      },
+                      items: { $ref: '#/components/schemas/User' },
                     },
                   },
                 },
@@ -114,9 +77,7 @@ export const getApiDocs = () => {
                 description: 'No autorizado',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -124,9 +85,7 @@ export const getApiDocs = () => {
                 description: 'Acceso denegado - Se requiere rol de administrador',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -146,9 +105,7 @@ export const getApiDocs = () => {
                   'application/json': {
                     schema: {
                       type: 'array',
-                      items: {
-                        $ref: '#/components/schemas/Transaction',
-                      },
+                      items: { $ref: '#/components/schemas/Transaction' },
                     },
                   },
                 },
@@ -157,9 +114,7 @@ export const getApiDocs = () => {
                 description: 'No autorizado',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -178,22 +133,10 @@ export const getApiDocs = () => {
                     type: 'object',
                     required: ['concepto', 'monto', 'fecha', 'tipo'],
                     properties: {
-                      concepto: {
-                        type: 'string',
-                      },
-                      monto: {
-                        type: 'number',
-                        format: 'float',
-                        minimum: 0,
-                      },
-                      fecha: {
-                        type: 'string',
-                        format: 'date-time',
-                      },
-                      tipo: {
-                        type: 'string',
-                        enum: ['INGRESO', 'EGRESO'],
-                      },
+                      concepto: { type: 'string' },
+                      monto: { type: 'number', format: 'float', minimum: 0 },
+                      fecha: { type: 'string', format: 'date-time' },
+                      tipo: { type: 'string', enum: ['INGRESO', 'EGRESO'] },
                     },
                   },
                 },
@@ -204,9 +147,7 @@ export const getApiDocs = () => {
                 description: 'Transacción creada exitosamente',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Transaction',
-                    },
+                    schema: { $ref: '#/components/schemas/Transaction' },
                   },
                 },
               },
@@ -214,9 +155,7 @@ export const getApiDocs = () => {
                 description: 'Datos inválidos',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -224,9 +163,7 @@ export const getApiDocs = () => {
                 description: 'No autorizado',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -234,9 +171,7 @@ export const getApiDocs = () => {
                 description: 'Acceso denegado - Se requiere rol de administrador',
                 content: {
                   'application/json': {
-                    schema: {
-                      $ref: '#/components/schemas/Error',
-                    },
+                    schema: { $ref: '#/components/schemas/Error' },
                   },
                 },
               },
@@ -246,5 +181,6 @@ export const getApiDocs = () => {
       },
     },
   });
+
   return spec;
 };
