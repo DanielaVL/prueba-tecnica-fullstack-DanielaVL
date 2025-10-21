@@ -6,7 +6,7 @@ Este proyecto es una aplicación web fullstack construida con Next.js, Prisma, y
 
 ## Demo
 
-Puedes ver la aplicación en funcionamiento aquí: [https://prueba-tecnica-fullstack-d-git-0decda-daniela-vasquezs-projects.vercel.app]
+Puedes ver la aplicación en funcionamiento aquí: https://prueba-tecnica-fullstack-daniela-vl.vercel.app
 
 ### Página Principal
 ![Página Principal](./assets/home.png)
